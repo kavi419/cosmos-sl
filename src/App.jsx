@@ -1,10 +1,12 @@
 import { Canvas, useLoader, useFrame, useThree } from '@react-three/fiber';
 import { useRef, useState, useEffect, useMemo, useLayoutEffect } from 'react';
-import { OrbitControls, Stars, useProgress } from '@react-three/drei';
+import { OrbitControls, Stars, useProgress, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { TextureLoader } from 'three';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import gsap from 'gsap';
+
+const ARCHIVE_POS = [0, 30, 150];
 
 const PLANET_DATA = [
   {
@@ -282,68 +284,70 @@ function Planet({ name, texture, size, position, speed = 1 }) {
   );
 }
 
-function ArchiveOverlay({ planet, isOpen, onClose }) {
-  if (!planet) return null;
+function HolographicScreen({ planet, isOpen }) {
+  if (!planet || !isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.85)',
-      backdropFilter: 'blur(20px)',
-      zIndex: 100,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: '100px',
-      color: 'white',
-      fontFamily: 'monospace',
-      transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
-      transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
-      opacity: isOpen ? 1 : 0,
-      pointerEvents: isOpen ? 'auto' : 'none',
-    }}>
-      <div style={{ maxWidth: '800px', width: '100%' }}>
-        <p style={{ color: '#00ffff', letterSpacing: '0.4em', marginBottom: '10px', fontSize: '0.8rem' }}>CLASSIFIED_DATA_ARCHIVE</p>
-        <h2 style={{ fontSize: '5rem', fontWeight: 'bold', margin: '0 0 20px 0', letterSpacing: '0.1em', borderBottom: '2px solid rgba(0, 255, 255, 0.3)', paddingBottom: '10px' }}>{planet.name}</h2>
+    <group position={ARCHIVE_POS}>
+      {/* The Glow Screen */}
+      <mesh>
+        <planeGeometry args={[45, 28]} />
+        <meshBasicMaterial color="#00ffff" transparent opacity={0.1} side={THREE.DoubleSide} />
+      </mesh>
 
-        <div style={{
-          fontSize: '1.2rem',
-          lineHeight: '1.8',
-          color: 'rgba(255, 255, 255, 0.8)',
-          textAlign: 'justify',
-          marginBottom: '50px'
-        }}>
-          {planet.wiki}
-        </div>
+      {/* Grid Wireframe */}
+      <mesh position={[0, 0, 0.01]}>
+        <planeGeometry args={[45, 28]} />
+        <meshBasicMaterial color="#00ffff" transparent opacity={0.2} wireframe={true} />
+      </mesh>
 
-        <button
-          onClick={onClose}
-          style={{
-            background: 'transparent',
-            border: '1px solid #00ffff',
-            color: '#00ffff',
-            padding: '15px 40px',
-            fontSize: '1rem',
-            cursor: 'pointer',
-            letterSpacing: '0.2em',
-            transition: 'all 0.3s ease',
-            boxShadow: '0 0 20px rgba(0, 255, 255, 0.2)',
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = 'rgba(0, 255, 255, 0.1)';
-            e.target.style.boxShadow = '0 0 30px rgba(0, 255, 255, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = 'transparent';
-            e.target.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.2)';
-          }}
-        >
-          RETURN TO ORBIT
-        </button>
-      </div>
-    </div>
+      {/* Header */}
+      <Text
+        position={[0, 10, 0.2]}
+        fontSize={3}
+        color="#00ffff"
+        anchorX="center"
+        anchorY="middle"
+        letterSpacing={0.1}
+      >
+        {planet.name} DATABASE
+      </Text>
+
+      {/* Sub-Header */}
+      <Text
+        position={[-20, 7, 0.2]}
+        fontSize={0.8}
+        color="#00ffff"
+        anchorX="left"
+        anchorY="middle"
+      >
+        CLASSIFIED_DATA_ARCHIVE // SECTOR_07
+      </Text>
+
+      {/* Body Text */}
+      <Text
+        position={[0, -2, 0.2]}
+        fontSize={1}
+        maxWidth={40}
+        lineHeight={1.5}
+        color="white"
+        textAlign="justify"
+        anchorX="center"
+        anchorY="middle"
+      >
+        {planet.wiki}
+        {"\n\n"}
+        SYSTEM ANALYSIS: Orbital stability nominal. Composition primarily silicate rock and metal.
+        Atmospheric data processed. No immediate biological threats detected.
+        SECURITY CLEARANCE: LEVEL 5 (ALPHA).
+      </Text>
+
+      {/* Scanning Line Effect */}
+      <mesh position={[0, 0, 0.05]}>
+        <planeGeometry args={[45, 0.1]} />
+        <meshBasicMaterial color="#00ffff" transparent opacity={0.5} />
+      </mesh>
+    </group>
   );
 }
 
@@ -394,6 +398,25 @@ function CameraHandler({ target }) {
   useEffect(() => {
     if (!controls) return;
 
+    if (target === 'ARCHIVE') {
+      gsap.to(camera.position, {
+        x: ARCHIVE_POS[0],
+        y: ARCHIVE_POS[1],
+        z: ARCHIVE_POS[2] + 40,
+        duration: 2.5,
+        ease: 'power3.inOut',
+      });
+
+      gsap.to(controls.target, {
+        x: ARCHIVE_POS[0],
+        y: ARCHIVE_POS[1],
+        z: ARCHIVE_POS[2],
+        duration: 2.5,
+        ease: 'power3.inOut',
+      });
+      return;
+    }
+
     const data = PLANET_DATA.find(p => p.name === target);
     if (!data) return;
 
@@ -422,11 +445,11 @@ function CameraHandler({ target }) {
 
 function App() {
   const [target, setTarget] = useState('EARTH');
+  const [prevTarget, setPrevTarget] = useState('EARTH');
   const [timeSpeed, setTimeSpeed] = useState(1);
   const [audioPlaying, setAudioPlaying] = useState(false);
-  const [archiveOpen, setArchiveOpen] = useState(false);
   const audioRef = useRef(new Audio('/sounds/space.mp3'));
-  const currentPlanet = PLANET_DATA.find(p => p.name === target);
+  const currentPlanet = PLANET_DATA.find(p => p.name === (target === 'ARCHIVE' ? prevTarget : target));
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -470,7 +493,6 @@ function App() {
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, background: 'black', overflow: 'hidden' }}>
       <LoadingScreen />
-      <ArchiveOverlay planet={currentPlanet} isOpen={archiveOpen} onClose={() => setArchiveOpen(false)} />
 
       {/* UI Layer */}
       <div style={{
@@ -487,7 +509,7 @@ function App() {
         justifyContent: 'space-between',
         boxSizing: 'border-box',
         transition: 'opacity 0.5s ease',
-        opacity: archiveOpen ? 0 : 1
+        opacity: target === 'ARCHIVE' ? 0 : 1
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
           <div style={{ color: 'white', marginBottom: '20px' }}>
@@ -553,19 +575,21 @@ function App() {
               GRAVITY: {currentPlanet?.gravity}<br />
               STATUS: ACTIVE LINK
             </div>
-            <button
-              onClick={() => setArchiveOpen(true)}
-              style={{
-                ...navButtonStyle,
-                width: 'auto',
-                background: 'rgba(0, 255, 255, 0.1)',
-                border: '1px solid #00ffff',
-                padding: '8px 20px',
-                pointerEvents: 'auto'
-              }}
-            >
-              [ ACCESS ARCHIVE ]
-            </button>
+            {target !== 'ARCHIVE' && (
+              <button
+                onClick={() => { setPrevTarget(target); setTarget('ARCHIVE'); }}
+                style={{
+                  ...navButtonStyle,
+                  width: 'auto',
+                  background: 'rgba(0, 255, 255, 0.1)',
+                  border: '1px solid #00ffff',
+                  padding: '8px 20px',
+                  pointerEvents: 'auto'
+                }}
+              >
+                [ ACCESS ARCHIVE ]
+              </button>
+            )}
           </div>
 
           <div style={{ textAlign: 'right', color: '#4ade80', fontFamily: 'monospace', fontSize: '0.8rem' }}>
@@ -574,6 +598,33 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* Archive Interaction UI (Only visible in Archive Mode) */}
+      {target === 'ARCHIVE' && (
+        <div style={{
+          position: 'absolute',
+          bottom: '100px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 20,
+          pointerEvents: 'auto'
+        }}>
+          <button
+            onClick={() => setTarget(prevTarget)}
+            style={{
+              ...navButtonStyle,
+              width: 'auto',
+              background: 'rgba(0, 255, 255, 0.1)',
+              border: '2px solid #00ffff',
+              padding: '12px 40px',
+              fontSize: '1rem',
+              boxShadow: '0 0 20px rgba(0, 255, 255, 0.3)'
+            }}
+          >
+            RETURN TO ORBIT
+          </button>
+        </div>
+      )}
 
       {/* 3D Canvas Layer */}
       <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
@@ -597,6 +648,8 @@ function App() {
           <EffectComposer>
             <Bloom luminanceThreshold={0.2} luminanceSmoothing={0.02} intensity={1.5} height={300} />
           </EffectComposer>
+
+          <HolographicScreen planet={currentPlanet} isOpen={target === 'ARCHIVE'} />
         </Canvas>
       </div>
 
