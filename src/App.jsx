@@ -87,15 +87,15 @@ function LoadingScreen() {
       color: '#4ade80', fontFamily: 'monospace', padding: isMobile ? '20px' : '0'
     }}>
       <h1 style={{
-        fontSize: isMobile ? '2.2rem' : '4rem',
+        fontSize: isMobile ? '1.8rem' : '4rem',
         fontWeight: 'bold',
-        marginBottom: '20px',
-        letterSpacing: isMobile ? '0.1em' : '0.2em',
+        marginBottom: '10px',
+        letterSpacing: isMobile ? '0.05em' : '0.2em',
         textAlign: 'center'
       }}>
         COSMOS EXPLORER
       </h1>
-      <div style={{ fontSize: isMobile ? '0.8rem' : '1.2rem', marginBottom: '20px' }}>
+      <div style={{ fontSize: isMobile ? '0.7rem' : '1.2rem', marginBottom: '20px' }}>
         SYSTEM INITIALIZING...
       </div>
 
@@ -311,7 +311,7 @@ function HolographicScreen({ planet, isOpen }) {
       {/* Header */}
       <Text
         position={[0, 10, 0.2]}
-        fontSize={3}
+        fontSize={isMobile ? 1.5 : 3}
         color="#00ffff"
         anchorX="center"
         anchorY="middle"
@@ -334,9 +334,9 @@ function HolographicScreen({ planet, isOpen }) {
       {/* Body Text */}
       <Text
         position={[0, -2, 0.2]}
-        fontSize={1}
-        maxWidth={40}
-        lineHeight={1.5}
+        fontSize={isMobile ? 0.7 : 1}
+        maxWidth={isMobile ? 22 : 40}
+        lineHeight={1.4}
         color="white"
         textAlign="justify"
         anchorX="center"
@@ -344,9 +344,7 @@ function HolographicScreen({ planet, isOpen }) {
       >
         {planet.wiki}
         {"\n\n"}
-        SYSTEM ANALYSIS: Orbital stability nominal. Composition primarily silicate rock and metal.
-        Atmospheric data processed. No immediate biological threats detected.
-        SECURITY CLEARANCE: LEVEL 5 (ALPHA).
+        SYSTEM ANALYSIS: Nominal conditions.
       </Text>
 
       {/* Scanning Line Effect */}
@@ -411,7 +409,7 @@ function CameraHandler({ target }) {
       gsap.to(camera.position, {
         x: ARCHIVE_POS[0],
         y: ARCHIVE_POS[1],
-        z: ARCHIVE_POS[2] + (isMobile ? 80 : 40),
+        z: ARCHIVE_POS[2] + (isMobile ? 120 : 40),
         duration: 2.5,
         ease: 'power3.inOut',
       });
@@ -475,15 +473,20 @@ function App() {
 
   const sidebarStyle = {
     position: 'absolute',
-    right: isMobile ? '10px' : '20px',
-    top: '50%',
-    transform: `translateY(-50%) ${isMobile ? 'scale(0.8)' : ''}`,
-    transformOrigin: 'right center',
+    right: isMobile ? '0' : '20px',
+    top: isMobile ? 'auto' : '50%',
+    bottom: isMobile ? '120px' : 'auto',
+    width: isMobile ? '100vw' : 'auto',
+    transform: isMobile ? 'none' : 'translateY(-50%)',
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: isMobile ? 'row' : 'column',
+    overflowX: isMobile ? 'auto' : 'visible',
+    whiteSpace: isMobile ? 'nowrap' : 'normal',
+    padding: isMobile ? '10px 20px' : '0',
     gap: '10px',
     zIndex: 20,
     pointerEvents: 'auto',
+    scrollbarWidth: 'none',
   };
 
   const navButtonStyle = {
@@ -523,10 +526,10 @@ function App() {
         transition: 'opacity 0.5s ease',
         opacity: target === 'ARCHIVE' ? 0 : 1
       }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', transform: isMobile ? 'scale(0.8)' : 'none', transformOrigin: 'top left' }}>
-          <div style={{ color: 'white', marginBottom: '20px' }}>
-            <h1 style={{ fontSize: isMobile ? '2rem' : '3rem', fontWeight: 'bold', letterSpacing: '0.2em', margin: 0 }}>COSMOS EXPLORER</h1>
-            <p style={{ opacity: 0.7, margin: '5px 0 0 0', fontSize: isMobile ? '0.6rem' : '1rem' }}>SOLAR SYSTEM EXPLORATION // v2.0</p>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', transform: isMobile ? 'scale(0.7)' : 'none', transformOrigin: 'top left' }}>
+          <div style={{ color: 'white', marginBottom: '15px' }}>
+            <h1 style={{ fontSize: isMobile ? '1.5rem' : '3rem', fontWeight: 'bold', letterSpacing: '0.1em', margin: 0 }}>COSMOS EXPLORER</h1>
+            <p style={{ opacity: 0.7, margin: '2px 0 0 0', fontSize: isMobile ? '0.5rem' : '1rem' }}>SOLAR SYSTEM EXPLORATION // v2.0</p>
           </div>
           <button
             onClick={() => setAudioPlaying(!audioPlaying)}
@@ -573,20 +576,18 @@ function App() {
           <div style={{
             background: 'rgba(0, 255, 255, 0.05)',
             border: '1px solid rgba(0, 255, 255, 0.2)',
-            padding: isMobile ? '15px' : '25px',
+            padding: isMobile ? '12px' : '25px',
             backdropFilter: 'blur(10px)',
-            width: isMobile ? 'calc(100vw - 40px)' : '380px',
-            maxWidth: isMobile ? 'none' : '380px',
+            width: isMobile ? '100%' : '380px',
             boxSizing: 'border-box'
           }}>
-            <span style={{ fontSize: '0.7rem', color: '#00ffff', opacity: 0.6, fontFamily: 'monospace' }}>DATA_STREAM // {target}</span><br />
-            <span style={{ fontSize: isMobile ? '1.8rem' : '2.5rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.05em' }}>{target}</span><br />
-            <span style={{ fontSize: isMobile ? '0.7rem' : '0.9rem', color: '#00ffff', opacity: 0.8 }}>{currentPlanet?.description}</span>
-            <div style={{ height: '1px', background: 'rgba(0, 255, 255, 0.2)', margin: '15px 0' }} />
-            <div style={{ color: '#4ade80', fontFamily: 'monospace', fontSize: isMobile ? '0.6rem' : '0.8rem', lineHeight: '1.6', marginBottom: '20px' }}>
+            <span style={{ fontSize: '0.6rem', color: '#00ffff', opacity: 0.6, fontFamily: 'monospace' }}>DATA_STREAM // {target}</span><br />
+            <span style={{ fontSize: isMobile ? '1.4rem' : '2.5rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.05em' }}>{target}</span><br />
+            <span style={{ fontSize: isMobile ? '0.6rem' : '0.9rem', color: '#00ffff', opacity: 0.8 }}>{currentPlanet?.description}</span>
+            <div style={{ height: '1px', background: 'rgba(0, 255, 255, 0.2)', margin: isMobile ? '10px 0' : '15px 0' }} />
+            <div style={{ color: '#4ade80', fontFamily: 'monospace', fontSize: isMobile ? '0.5rem' : '0.8rem', lineHeight: '1.4', marginBottom: '15px' }}>
               STATS: {currentPlanet?.details}<br />
-              GRAVITY: {currentPlanet?.gravity}<br />
-              STATUS: ACTIVE LINK
+              GRAVITY: {currentPlanet?.gravity}
             </div>
             {target !== 'ARCHIVE' && (
               <button
