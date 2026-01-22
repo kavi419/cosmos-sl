@@ -1,22 +1,120 @@
 import { Canvas, useLoader, useFrame, useThree } from '@react-three/fiber';
-import { useRef, useState, useEffect, useMemo } from 'react';
-import { OrbitControls, Stars } from '@react-three/drei';
+import { useRef, useState, useEffect, useMemo, useLayoutEffect } from 'react';
+import { OrbitControls, Stars, useProgress } from '@react-three/drei';
 import * as THREE from 'three';
 import { TextureLoader } from 'three';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import gsap from 'gsap';
 
 const PLANET_DATA = [
-  { name: 'SUN', texture: '/textures/sun.jpg', size: 8, position: [0, 0, 0], description: 'The Star' },
-  { name: 'MERCURY', texture: '/textures/mercury.jpg', size: 0.8, position: [12, 0, 0], description: 'The Swift Planet' },
-  { name: 'VENUS', texture: '/textures/venus.jpg', size: 1.5, position: [18, 0, 5], description: 'The Morning Star' },
-  { name: 'EARTH', texture: '/textures/earth.jpg', size: 2.5, position: [28, 0, 0], description: 'Our Home' },
-  { name: 'MARS', texture: '/textures/2k_mars.jpg', size: 1.8, position: [38, 0, -5], description: 'The Red Planet' },
-  { name: 'JUPITER', texture: '/textures/jupiter.jpg', size: 5, position: [55, 0, 10], description: 'The Gas Giant' },
-  { name: 'SATURN', texture: '/textures/saturn.jpg', size: 4.5, position: [75, 0, -10], description: 'The Ringed Planet' },
-  { name: 'URANUS', texture: '/textures/uranus.jpg', size: 3, position: [95, 0, 5], description: 'The Ice Giant' },
-  { name: 'NEPTUNE', texture: '/textures/neptune.jpg', size: 2.8, position: [115, 0, -5], description: 'The Blue Giant' },
+  {
+    name: 'SUN', texture: '/textures/sun.jpg', size: 8, position: [0, 0, 0], description: 'The Star',
+    details: 'Type: G-Type Main Sequence | Temp: 5,500°C', gravity: '247 m/s²',
+    wiki: "The Sun is the star at the center of the Solar System. It is a nearly perfect sphere of hot plasma, heated to incandescence by nuclear fusion reactions in its core. The Sun radiates energy mainly as visible light, ultraviolet light, and infrared radiation. It is by far the most important source of energy for life on Earth."
+  },
+  {
+    name: 'MERCURY', texture: '/textures/mercury.jpg', size: 0.8, position: [12, 0, 0], description: 'The Swift Planet',
+    details: 'Orbit: 88 Days | Temp: 430°C / -180°C', gravity: '3.7 m/s²',
+    wiki: "Mercury is the smallest planet in the Solar System and the closest to the Sun. Its orbit around the Sun takes 87.97 Earth days, the shortest of all the Sun's planets. Mercury is a rocky planet with a heavily cratered surface, similar to the Moon, indicating that it has been geologically inactive for billions of years."
+  },
+  {
+    name: 'VENUS', texture: '/textures/venus.jpg', size: 1.5, position: [18, 0, 5], description: 'The Morning Star',
+    details: 'Atmosphere: CO2 | Temp: 462°C', gravity: '8.87 m/s²',
+    wiki: "Venus is the second planet from the Sun. It is a terrestrial planet and is sometimes called Earth's 'sister planet' because of their similar size, mass, proximity to the Sun, and bulk composition. However, it is radically different from Earth in other respects. It has the densest atmosphere of the four terrestrial planets, consisting of more than 96% carbon dioxide."
+  },
+  {
+    name: 'EARTH', texture: '/textures/earth.jpg', size: 2.5, position: [28, 0, 0], description: 'Terra',
+    details: 'Population: 8 Billion | Moon: 1', gravity: '9.8 m/s²',
+    wiki: "Earth is the third planet from the Sun and the only astronomical object known to harbor life. While large volumes of water can be found throughout the Solar System, only Earth sustains liquid surface water. Earth's atmosphere consists mostly of nitrogen and oxygen. It is the cradle of humanity and our only home in the vast cosmos."
+  },
+  {
+    name: 'MARS', texture: '/textures/2k_mars.jpg', size: 1.8, position: [38, 0, -5], description: 'The Red Planet',
+    details: 'Orbit: 687 Days | Temp: -63°C', gravity: '3.71 m/s²',
+    wiki: "Mars is the fourth planet from the Sun and the second-smallest planet in the Solar System, being larger than only Mercury. Mars carries the name of the Roman god of war and is often referred to as the 'Red Planet'. The latter refers to the effect of the iron oxide prevalent on Mars's surface, which gives it a striking reddish appearance."
+  },
+  {
+    name: 'JUPITER', texture: '/textures/jupiter.jpg', size: 5, position: [55, 0, 10], description: 'The Gas Giant',
+    details: 'Moons: 95 | Diameter: 139,820 km', gravity: '24.79 m/s²',
+    wiki: "Jupiter is the fifth planet from the Sun and the largest in the Solar System. It is a gas giant with a mass more than two and a half times that of all the other planets in the Solar System combined, but slightly less than one-thousandth the mass of the Sun. Jupiter is primarily composed of hydrogen, followed by helium, which constitutes a quarter of its mass."
+  },
+  {
+    name: 'SATURN', texture: '/textures/saturn.jpg', size: 4.5, position: [75, 0, -10], description: 'The Ringed Planet',
+    details: 'Rings: 7 Groups | Moons: 146', gravity: '10.44 m/s²',
+    wiki: "Saturn is the sixth planet from the Sun and the second-largest in the Solar System, after Jupiter. It is a gas giant with an average radius of about nine and a half times that of Earth. Saturn's most famous feature is its prominent ring system, which is composed mostly of ice particles, with a smaller amount of rocky debris and dust."
+  },
+  {
+    name: 'URANUS', texture: '/textures/uranus.jpg', size: 3, position: [95, 0, 5], description: 'The Ice Giant',
+    details: 'Tilt: 98° | Temp: -224°C', gravity: '8.69 m/s²',
+    wiki: "Uranus is the seventh planet from the Sun. Its name is a reference to the Greek god of the sky, Uranus. It has the third-largest planetary radius and fourth-largest planetary mass in the Solar System. Uranus is similar in composition to Neptune, and both have bulk chemical compositions which differ from that of the larger gas giants Jupiter and Saturn."
+  },
+  {
+    name: 'NEPTUNE', texture: '/textures/neptune.jpg', size: 2.8, position: [115, 0, -5], description: 'The Blue Giant',
+    details: 'Winds: 2,100 km/h | Temp: -214°C', gravity: '11.15 m/s²',
+    wiki: "Neptune is the eighth planet from the Sun and the farthest known solar planet. In the Solar System, it is the fourth-largest planet by diameter, the third-most-massive planet, and the densest giant planet. Neptune is 17 times the mass of Earth, slightly more massive than its near-twin Uranus. The planet's striking blue color is due to methane in its atmosphere."
+  },
 ];
+
+function LoadingScreen() {
+  const { active } = useProgress(); // Check if real loading is active
+  const [progressValue, setProgressValue] = useState(0);
+
+  useEffect(() => {
+    // Animate progress from 0 to 100 over ~2 seconds
+    const interval = setInterval(() => {
+      setProgressValue((old) => {
+        if (old >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return old + 1; // Increment by 1% every ~20ms
+      });
+    }, 20); // 20ms * 100 steps = 2000ms (2 seconds)
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Wait until visual animation is done (100%) AND real assets are loaded (!active)
+  if (progressValue === 100 && !active) return null;
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+      backgroundColor: 'black', zIndex: 9999, display: 'flex',
+      flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      color: '#4ade80', fontFamily: 'monospace'
+    }}>
+      <h1 style={{ fontSize: '4rem', fontWeight: 'bold', marginBottom: '20px', letterSpacing: '0.2em' }}>
+        COSMOS EXPLORER
+      </h1>
+      <div style={{ fontSize: '1.2rem', marginBottom: '20px' }}>
+        SYSTEM INITIALIZING...
+      </div>
+
+      {/* Progress Bar Container */}
+      <div style={{
+        width: '300px',
+        height: '4px',
+        background: '#111',
+        borderRadius: '2px',
+        overflow: 'hidden',
+        boxShadow: '0 0 10px rgba(74, 222, 128, 0.2)'
+      }}>
+        {/* Smoothly Animated Bar */}
+        <div style={{
+          width: `${progressValue}%`,
+          height: '100%',
+          background: '#4ade80',
+          boxShadow: '0 0 20px #4ade80', // Glowing effect
+          transition: 'width 0.1s linear' // Smooth movement
+        }} />
+      </div>
+
+      <p style={{ marginTop: '10px', fontSize: '0.8rem', opacity: 0.7 }}>
+        BOOT SEQUENCE: {progressValue}%
+      </p>
+    </div>
+  );
+}
 
 function Atmosphere({ position }) {
   return (
@@ -33,12 +131,12 @@ function Atmosphere({ position }) {
   );
 }
 
-function Clouds({ position }) {
+function Clouds({ position, speed = 1 }) {
   const cloudMap = useLoader(TextureLoader, '/textures/clouds.jpg');
   const ref = useRef();
   useFrame(() => {
     if (ref.current) {
-      ref.current.rotation.y += 0.0001;
+      ref.current.rotation.y += 0.0001 * speed;
     }
   });
   return (
@@ -68,7 +166,52 @@ function Sun() {
   );
 }
 
-function Planet({ name, texture, size, position }) {
+function AsteroidBelt({ speed = 1 }) {
+  const count = 2000;
+  const meshRef = useRef();
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+
+  const asteroids = useMemo(() => {
+    const data = [];
+    for (let i = 0; i < count; i++) {
+      const radius = 38 + Math.random() * 10;
+      const angle = Math.random() * Math.PI * 2;
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      const y = (Math.random() - 0.5) * 4;
+      const scale = 0.1 + Math.random() * 0.3;
+      const rotation = [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI];
+      data.push({ x, y, z, scale, rotation });
+    }
+    return data;
+  }, []);
+
+  useLayoutEffect(() => {
+    asteroids.forEach((data, i) => {
+      dummy.position.set(data.x, data.y, data.z);
+      dummy.rotation.set(...data.rotation);
+      dummy.scale.set(data.scale, data.scale, data.scale);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [asteroids, dummy]);
+
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.0005 * speed;
+    }
+  });
+
+  return (
+    <instancedMesh ref={meshRef} args={[null, null, count]}>
+      <dodecahedronGeometry args={[0.2, 0]} />
+      <meshStandardMaterial color="#8c8c8c" roughness={0.8} />
+    </instancedMesh>
+  );
+}
+
+function Planet({ name, texture, size, position, speed = 1 }) {
   const map = useLoader(TextureLoader, texture);
   const ringStrip = useLoader(TextureLoader, name === 'SATURN' ? '/textures/saturn_ring_strip.jpg' : '/textures/sun.jpg');
   const ref = useRef();
@@ -99,7 +242,7 @@ function Planet({ name, texture, size, position }) {
 
   useFrame(() => {
     if (ref.current) {
-      ref.current.rotation.y += 0.001;
+      ref.current.rotation.y += 0.001 * speed;
     }
   });
 
@@ -139,7 +282,72 @@ function Planet({ name, texture, size, position }) {
   );
 }
 
-function EarthGroup() {
+function ArchiveOverlay({ planet, isOpen, onClose }) {
+  if (!planet) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.85)',
+      backdropFilter: 'blur(20px)',
+      zIndex: 100,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '100px',
+      color: 'white',
+      fontFamily: 'monospace',
+      transition: 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
+      transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
+      opacity: isOpen ? 1 : 0,
+      pointerEvents: isOpen ? 'auto' : 'none',
+    }}>
+      <div style={{ maxWidth: '800px', width: '100%' }}>
+        <p style={{ color: '#00ffff', letterSpacing: '0.4em', marginBottom: '10px', fontSize: '0.8rem' }}>CLASSIFIED_DATA_ARCHIVE</p>
+        <h2 style={{ fontSize: '5rem', fontWeight: 'bold', margin: '0 0 20px 0', letterSpacing: '0.1em', borderBottom: '2px solid rgba(0, 255, 255, 0.3)', paddingBottom: '10px' }}>{planet.name}</h2>
+
+        <div style={{
+          fontSize: '1.2rem',
+          lineHeight: '1.8',
+          color: 'rgba(255, 255, 255, 0.8)',
+          textAlign: 'justify',
+          marginBottom: '50px'
+        }}>
+          {planet.wiki}
+        </div>
+
+        <button
+          onClick={onClose}
+          style={{
+            background: 'transparent',
+            border: '1px solid #00ffff',
+            color: '#00ffff',
+            padding: '15px 40px',
+            fontSize: '1rem',
+            cursor: 'pointer',
+            letterSpacing: '0.2em',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 0 20px rgba(0, 255, 255, 0.2)',
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = 'rgba(0, 255, 255, 0.1)';
+            e.target.style.boxShadow = '0 0 30px rgba(0, 255, 255, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'transparent';
+            e.target.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.2)';
+          }}
+        >
+          RETURN TO ORBIT
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EarthGroup({ speed = 1 }) {
   const earthData = PLANET_DATA.find(p => p.name === 'EARTH');
   const earthMap = useLoader(TextureLoader, '/textures/earth.jpg');
   const moonMap = useLoader(TextureLoader, '/textures/moon.jpg');
@@ -148,14 +356,14 @@ function EarthGroup() {
 
   useFrame(({ clock }) => {
     if (earthRef.current) {
-      earthRef.current.rotation.y += 0.00004;
+      earthRef.current.rotation.y += 0.00004 * speed;
     }
     if (moonRef.current) {
-      const t = clock.getElapsedTime() * 0.1;
+      const t = clock.getElapsedTime() * 0.1 * speed;
       const distance = 8;
       moonRef.current.position.x = Math.sin(t) * distance;
       moonRef.current.position.z = Math.cos(t) * distance;
-      moonRef.current.rotation.y += 0.002;
+      moonRef.current.rotation.y += 0.002 * speed;
     }
   });
 
@@ -169,7 +377,7 @@ function EarthGroup() {
 
       {/* Atmosphere and Clouds */}
       <Atmosphere position={[0, 0, 0]} />
-      <Clouds position={[0, 0, 0]} />
+      <Clouds position={[0, 0, 0]} speed={speed} />
 
       {/* Moon */}
       <mesh ref={moonRef}>
@@ -214,7 +422,22 @@ function CameraHandler({ target }) {
 
 function App() {
   const [target, setTarget] = useState('EARTH');
+  const [timeSpeed, setTimeSpeed] = useState(1);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const audioRef = useRef(new Audio('/sounds/space.mp3'));
   const currentPlanet = PLANET_DATA.find(p => p.name === target);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    audio.loop = true;
+    audio.volume = 1.0;
+    if (audioPlaying) {
+      audio.play().catch(e => console.log("Audio play deferred until interaction."));
+    } else {
+      audio.pause();
+    }
+  }, [audioPlaying]);
 
   const sidebarStyle = {
     position: 'absolute',
@@ -246,12 +469,50 @@ function App() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, background: 'black', overflow: 'hidden' }}>
+      <LoadingScreen />
+      <ArchiveOverlay planet={currentPlanet} isOpen={archiveOpen} onClose={() => setArchiveOpen(false)} />
 
       {/* UI Layer */}
-      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 10, pointerEvents: 'none', padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxSizing: 'border-box' }}>
-        <div style={{ color: 'white' }}>
-          <h1 style={{ fontSize: '3rem', fontWeight: 'bold', letterSpacing: '0.2em', margin: 0 }}>COSMOS EXPLORER</h1>
-          <p style={{ opacity: 0.7, margin: '5px 0 0 0' }}>SOLAR SYSTEM EXPLORATION // v2.0</p>
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 10,
+        pointerEvents: 'none',
+        padding: '40px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        boxSizing: 'border-box',
+        transition: 'opacity 0.5s ease',
+        opacity: archiveOpen ? 0 : 1
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <div style={{ color: 'white', marginBottom: '20px' }}>
+            <h1 style={{ fontSize: '3rem', fontWeight: 'bold', letterSpacing: '0.2em', margin: 0 }}>COSMOS EXPLORER</h1>
+            <p style={{ opacity: 0.7, margin: '5px 0 0 0' }}>SOLAR SYSTEM EXPLORATION // v2.0</p>
+          </div>
+          <button
+            onClick={() => setAudioPlaying(!audioPlaying)}
+            style={{ ...navButtonStyle, width: 'auto', marginBottom: '20px', pointerEvents: 'auto' }}
+          >
+            {audioPlaying ? '[ 🔊 SOUND: ON ]' : '[ 🔇 SOUND: OFF ]'}
+          </button>
+
+          <div style={{ color: '#00ffff', fontFamily: 'monospace', fontSize: '0.7rem', pointerEvents: 'auto' }}>
+            <label style={{ display: 'block', marginBottom: '5px' }}>TIME WARP: {timeSpeed.toFixed(1)}x</label>
+            <input
+              type="range"
+              min="0"
+              max="10"
+              step="0.1"
+              value={timeSpeed}
+              onChange={(e) => setTimeSpeed(parseFloat(e.target.value))}
+              style={{ width: '150px', cursor: 'pointer', accentColor: '#00ffff' }}
+            />
+          </div>
         </div>
 
         {/* Sidebar Navigation */}
@@ -273,17 +534,43 @@ function App() {
           ))}
         </div>
 
-        {/* Bottom Data Logs */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#4ade80', fontFamily: 'monospace' }}>
-          <div>
-            <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>CURRENT_TARGET</span><br />
-            <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{target}</span><br />
-            <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{currentPlanet?.description}</span>
+        {/* Planet Info Panel (Bottom Left) */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', pointerEvents: 'none' }}>
+          <div style={{
+            background: 'rgba(0, 255, 255, 0.05)',
+            border: '1px solid rgba(0, 255, 255, 0.2)',
+            padding: '25px',
+            backdropFilter: 'blur(10px)',
+            minWidth: '380px',
+            boxSizing: 'border-box'
+          }}>
+            <span style={{ fontSize: '0.7rem', color: '#00ffff', opacity: 0.6, fontFamily: 'monospace' }}>DATA_STREAM // {target}</span><br />
+            <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.05em' }}>{target}</span><br />
+            <span style={{ fontSize: '0.9rem', color: '#00ffff', opacity: 0.8 }}>{currentPlanet?.description}</span>
+            <div style={{ height: '1px', background: 'rgba(0, 255, 255, 0.2)', margin: '15px 0' }} />
+            <div style={{ color: '#4ade80', fontFamily: 'monospace', fontSize: '0.8rem', lineHeight: '1.6', marginBottom: '20px' }}>
+              STATS: {currentPlanet?.details}<br />
+              GRAVITY: {currentPlanet?.gravity}<br />
+              STATUS: ACTIVE LINK
+            </div>
+            <button
+              onClick={() => setArchiveOpen(true)}
+              style={{
+                ...navButtonStyle,
+                width: 'auto',
+                background: 'rgba(0, 255, 255, 0.1)',
+                border: '1px solid #00ffff',
+                padding: '8px 20px',
+                pointerEvents: 'auto'
+              }}
+            >
+              [ ACCESS ARCHIVE ]
+            </button>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            STATUS: ACTIVE LINK<br />
-            VELOCITY: {target === 'SUN' ? '---' : '29.78 KM/S'}<br />
-            DISTANCE: {target === 'SUN' ? '0' : '149.6M KM'}
+
+          <div style={{ textAlign: 'right', color: '#4ade80', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+            SYSTEM: ONLINE<br />
+            VERSION: v2.0-STABLE
           </div>
         </div>
       </div>
@@ -299,9 +586,11 @@ function App() {
           {/* Render Planets */}
           {PLANET_DATA.map(planet => {
             if (planet.name === 'SUN') return <Sun key={planet.name} />;
-            if (planet.name === 'EARTH') return <EarthGroup key={planet.name} />;
-            return <Planet key={planet.name} {...planet} />;
+            if (planet.name === 'EARTH') return <EarthGroup key={planet.name} speed={timeSpeed} />;
+            return <Planet key={planet.name} {...planet} speed={timeSpeed} />;
           })}
+
+          <AsteroidBelt speed={timeSpeed} />
 
           <OrbitControls makeDefault enableZoom={true} enablePan={false} enableRotate={true} />
 
