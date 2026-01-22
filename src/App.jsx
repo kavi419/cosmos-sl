@@ -291,7 +291,7 @@ function Planet({ name, texture, size, position, speed = 1 }) {
   );
 }
 
-function HolographicScreen({ planet, isOpen }) {
+function HolographicScreen({ planet, isOpen, isMobile }) {
   if (!planet || !isOpen) return null;
 
   return (
@@ -663,7 +663,7 @@ function App() {
             <Bloom luminanceThreshold={0.2} luminanceSmoothing={0.02} intensity={1.5} height={300} />
           </EffectComposer>
 
-          <HolographicScreen planet={currentPlanet} isOpen={target === 'ARCHIVE'} />
+          <HolographicScreen planet={currentPlanet} isOpen={target === 'ARCHIVE'} isMobile={isMobile} />
         </Canvas>
       </div>
 
