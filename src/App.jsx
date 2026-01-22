@@ -59,6 +59,7 @@ const PLANET_DATA = [
 function LoadingScreen() {
   const { active } = useProgress(); // Check if real loading is active
   const [progressValue, setProgressValue] = useState(0);
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
 
   useEffect(() => {
     // Animate progress from 0 to 100 over ~2 seconds
@@ -83,12 +84,18 @@ function LoadingScreen() {
       position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
       backgroundColor: 'black', zIndex: 9999, display: 'flex',
       flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      color: '#4ade80', fontFamily: 'monospace'
+      color: '#4ade80', fontFamily: 'monospace', padding: isMobile ? '20px' : '0'
     }}>
-      <h1 style={{ fontSize: '4rem', fontWeight: 'bold', marginBottom: '20px', letterSpacing: '0.2em' }}>
+      <h1 style={{
+        fontSize: isMobile ? '2.2rem' : '4rem',
+        fontWeight: 'bold',
+        marginBottom: '20px',
+        letterSpacing: isMobile ? '0.1em' : '0.2em',
+        textAlign: 'center'
+      }}>
         COSMOS EXPLORER
       </h1>
-      <div style={{ fontSize: '1.2rem', marginBottom: '20px' }}>
+      <div style={{ fontSize: isMobile ? '0.8rem' : '1.2rem', marginBottom: '20px' }}>
         SYSTEM INITIALIZING...
       </div>
 
@@ -398,11 +405,13 @@ function CameraHandler({ target }) {
   useEffect(() => {
     if (!controls) return;
 
+    const isMobile = window.innerWidth < 768;
+
     if (target === 'ARCHIVE') {
       gsap.to(camera.position, {
         x: ARCHIVE_POS[0],
         y: ARCHIVE_POS[1],
-        z: ARCHIVE_POS[2] + 40,
+        z: ARCHIVE_POS[2] + (isMobile ? 80 : 40),
         duration: 2.5,
         ease: 'power3.inOut',
       });
@@ -421,12 +430,12 @@ function CameraHandler({ target }) {
     if (!data) return;
 
     const [tx, ty, tz] = data.position;
-    const viewSize = data.size * 5;
+    const viewSize = data.size * (isMobile ? 8 : 5);
 
     gsap.to(camera.position, {
       x: tx + viewSize,
       y: ty + data.size,
-      z: tz + viewSize,
+      z: tz + viewSize + (isMobile ? 10 : 0),
       duration: 2,
       ease: 'power2.inOut',
     });
@@ -462,11 +471,14 @@ function App() {
     }
   }, [audioPlaying]);
 
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
+
   const sidebarStyle = {
     position: 'absolute',
-    right: '20px',
+    right: isMobile ? '10px' : '20px',
     top: '50%',
-    transform: 'translateY(-50%)',
+    transform: `translateY(-50%) ${isMobile ? 'scale(0.8)' : ''}`,
+    transformOrigin: 'right center',
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
@@ -503,7 +515,7 @@ function App() {
         height: '100%',
         zIndex: 10,
         pointerEvents: 'none',
-        padding: '40px',
+        padding: isMobile ? '20px' : '40px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -511,10 +523,10 @@ function App() {
         transition: 'opacity 0.5s ease',
         opacity: target === 'ARCHIVE' ? 0 : 1
       }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', transform: isMobile ? 'scale(0.8)' : 'none', transformOrigin: 'top left' }}>
           <div style={{ color: 'white', marginBottom: '20px' }}>
-            <h1 style={{ fontSize: '3rem', fontWeight: 'bold', letterSpacing: '0.2em', margin: 0 }}>COSMOS EXPLORER</h1>
-            <p style={{ opacity: 0.7, margin: '5px 0 0 0' }}>SOLAR SYSTEM EXPLORATION // v2.0</p>
+            <h1 style={{ fontSize: isMobile ? '2rem' : '3rem', fontWeight: 'bold', letterSpacing: '0.2em', margin: 0 }}>COSMOS EXPLORER</h1>
+            <p style={{ opacity: 0.7, margin: '5px 0 0 0', fontSize: isMobile ? '0.6rem' : '1rem' }}>SOLAR SYSTEM EXPLORATION // v2.0</p>
           </div>
           <button
             onClick={() => setAudioPlaying(!audioPlaying)}
@@ -561,16 +573,17 @@ function App() {
           <div style={{
             background: 'rgba(0, 255, 255, 0.05)',
             border: '1px solid rgba(0, 255, 255, 0.2)',
-            padding: '25px',
+            padding: isMobile ? '15px' : '25px',
             backdropFilter: 'blur(10px)',
-            minWidth: '380px',
+            width: isMobile ? 'calc(100vw - 40px)' : '380px',
+            maxWidth: isMobile ? 'none' : '380px',
             boxSizing: 'border-box'
           }}>
             <span style={{ fontSize: '0.7rem', color: '#00ffff', opacity: 0.6, fontFamily: 'monospace' }}>DATA_STREAM // {target}</span><br />
-            <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.05em' }}>{target}</span><br />
-            <span style={{ fontSize: '0.9rem', color: '#00ffff', opacity: 0.8 }}>{currentPlanet?.description}</span>
+            <span style={{ fontSize: isMobile ? '1.8rem' : '2.5rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.05em' }}>{target}</span><br />
+            <span style={{ fontSize: isMobile ? '0.7rem' : '0.9rem', color: '#00ffff', opacity: 0.8 }}>{currentPlanet?.description}</span>
             <div style={{ height: '1px', background: 'rgba(0, 255, 255, 0.2)', margin: '15px 0' }} />
-            <div style={{ color: '#4ade80', fontFamily: 'monospace', fontSize: '0.8rem', lineHeight: '1.6', marginBottom: '20px' }}>
+            <div style={{ color: '#4ade80', fontFamily: 'monospace', fontSize: isMobile ? '0.6rem' : '0.8rem', lineHeight: '1.6', marginBottom: '20px' }}>
               STATS: {currentPlanet?.details}<br />
               GRAVITY: {currentPlanet?.gravity}<br />
               STATUS: ACTIVE LINK
