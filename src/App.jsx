@@ -597,6 +597,7 @@ function CameraHandler({ target }) {
 function App() {
   const [target, setTarget] = useState('EARTH');
   const [prevTarget, setPrevTarget] = useState('EARTH');
+  const [showDeveloper, setShowDeveloper] = useState(false);
   const [timeSpeed, setTimeSpeed] = useState(1);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const audioRef = useRef(new Audio('/sounds/space.mp3'));
@@ -655,6 +656,87 @@ function App() {
     backdropFilter: 'blur(4px)',
   };
 
+  const DeveloperPortfolio = () => {
+    if (!showDeveloper) return null;
+    return (
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 100,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backdropFilter: 'blur(10px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
+      }}>
+        <div style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          border: '1px solid rgba(0, 255, 255, 0.2)',
+          padding: isMobile ? '20px' : '40px',
+          borderRadius: '12px',
+          maxWidth: '800px',
+          width: '100%',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          position: 'relative'
+        }}>
+          <button
+            onClick={() => setShowDeveloper(false)}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'none',
+              border: '1px solid #4ade80',
+              color: '#4ade80',
+              padding: '5px 15px',
+              cursor: 'pointer',
+              fontFamily: 'monospace'
+            }}
+          >
+            [ CLOSE ]
+          </button>
+
+          <h2 style={{ color: 'white', fontSize: isMobile ? '1.5rem' : '2.5rem', marginBottom: '10px', fontFamily: 'monospace' }}>KAVINDU NETHMINA</h2>
+          <p style={{ color: '#00ffff', marginBottom: '20px', fontFamily: 'monospace', opacity: 0.8 }}>CREATIVE DEVELOPER // COSMOS EXPLORER ARCHITECT</p>
+
+          <div style={{ display: 'flex', gap: '15px', marginBottom: '30px' }}>
+            <a href="https://github.com/kavi419" target="_blank" rel="noopener noreferrer" style={{ color: '#4ade80', textDecoration: 'none', fontFamily: 'monospace', fontSize: '0.9rem', border: '1px solid rgba(74, 222, 128, 0.3)', padding: '5px 15px' }}>
+              GITHUB
+            </a>
+            <a href="https://www.linkedin.com/in/kavindu-nethmina-bb9731385/" target="_blank" rel="noopener noreferrer" style={{ color: '#4ade80', textDecoration: 'none', fontFamily: 'monospace', fontSize: '0.9rem', border: '1px solid rgba(74, 222, 128, 0.3)', padding: '5px 15px' }}>
+              LINKEDIN
+            </a>
+          </div>
+
+          <p style={{ color: 'white', opacity: 0.7, marginBottom: '20px', lineHeight: '1.6', fontSize: '0.9rem' }}>
+            A passionate coder bridging the gap between physics and front-end engineering.
+            Cosmos Explorer is a showcase of real-time 3D web graphics, astronomical scale rendering, and high-fidelity textures.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '15px', marginTop: '20px' }}>
+            {[
+              "/images/portfolio/image0.png",
+              "/images/portfolio/image1.png",
+              "/images/portfolio/image2.png"
+            ].map((src, idx) => (
+              <div key={idx} style={{ aspectRatio: '16/9', overflow: 'hidden', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', background: '#111' }}>
+                <img
+                  src={src}
+                  alt={`Project shot ${idx + 1}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8, transition: 'opacity 0.3s ease' }}
+                  onMouseEnter={(e) => e.target.style.opacity = 1}
+                  onMouseLeave={(e) => e.target.style.opacity = 0.8}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, background: 'black', overflow: 'hidden' }}>
       <LoadingScreen />
@@ -683,9 +765,16 @@ function App() {
           </div>
           <button
             onClick={() => setAudioPlaying(!audioPlaying)}
-            style={{ ...navButtonStyle, width: 'auto', marginBottom: '20px', pointerEvents: 'auto' }}
+            style={{ ...navButtonStyle, width: 'auto', marginBottom: '10px', pointerEvents: 'auto' }}
           >
             {audioPlaying ? '[ 🔊 SOUND: ON ]' : '[ 🔇 SOUND: OFF ]'}
+          </button>
+
+          <button
+            onClick={() => setShowDeveloper(true)}
+            style={{ ...navButtonStyle, width: 'auto', marginBottom: '20px', pointerEvents: 'auto', borderColor: '#4ade80', color: '#4ade80' }}
+          >
+            [ DEVELOPER ]
           </button>
 
           <div style={{ color: '#00ffff', fontFamily: 'monospace', fontSize: '0.7rem', pointerEvents: 'auto' }}>
@@ -879,6 +968,7 @@ function App() {
         </Canvas>
       </div>
 
+      <DeveloperPortfolio />
     </div>
   );
 }
