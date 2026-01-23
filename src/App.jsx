@@ -472,18 +472,16 @@ function App() {
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
 
   const sidebarStyle = {
-    position: 'absolute',
-    left: isMobile ? '0' : 'auto',
-    right: isMobile ? '0' : '20px',
+    position: isMobile ? 'relative' : 'absolute',
+    right: isMobile ? 'auto' : '20px',
     top: isMobile ? 'auto' : '50%',
-    bottom: isMobile ? '10px' : 'auto',
-    width: isMobile ? '100vw' : 'auto',
+    width: isMobile ? '100%' : 'auto',
     transform: isMobile ? 'none' : 'translateY(-50%)',
     display: 'flex',
     flexDirection: isMobile ? 'row' : 'column',
     overflowX: isMobile ? 'auto' : 'visible',
     whiteSpace: isMobile ? 'nowrap' : 'normal',
-    padding: isMobile ? '10px 20px' : '0',
+    padding: isMobile ? '10px 0' : '0',
     gap: isMobile ? '8px' : '10px',
     zIndex: 20,
     pointerEvents: 'auto',
@@ -555,75 +553,104 @@ function App() {
           </div>
         </div>
 
-        {/* Sidebar Navigation */}
-        <div style={sidebarStyle}>
-          {isMobile && (
-            <style>{`
-              div::-webkit-scrollbar { display: none; }
-            `}</style>
-          )}
-          <p style={{
-            color: '#00ffff',
-            fontSize: '0.5rem',
-            marginBottom: isMobile ? '0' : '5px',
-            marginRight: isMobile ? '10px' : '0',
-            opacity: 0.5,
-            fontFamily: 'monospace',
-            display: isMobile ? 'none' : 'block'
-          }}>NAVIGATION_TARGETS</p>
-          {PLANET_DATA.map(planet => (
-            <button
-              key={planet.name}
-              onClick={() => setTarget(planet.name)}
-              style={{
-                ...navButtonStyle,
-                background: target === planet.name ? 'rgba(0, 255, 255, 0.2)' : navButtonStyle.background,
-                borderColor: target === planet.name ? 'rgba(0, 255, 255, 1)' : navButtonStyle.borderColor,
-                boxShadow: target === planet.name ? '0 0 15px rgba(0, 255, 255, 0.3)' : 'none',
-              }}
-            >
-              {planet.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Planet Info Panel (Bottom Left) */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', pointerEvents: 'none' }}>
-          <div style={{
-            background: 'rgba(0, 255, 255, 0.05)',
-            border: '1px solid rgba(0, 255, 255, 0.2)',
-            padding: isMobile ? '12px' : '25px',
-            backdropFilter: 'blur(10px)',
-            width: isMobile ? '100%' : '380px',
-            boxSizing: 'border-box',
-            marginBottom: isMobile ? '60px' : '0'
-          }}>
-            <span style={{ fontSize: '0.6rem', color: '#00ffff', opacity: 0.6, fontFamily: 'monospace' }}>DATA_STREAM // {target}</span><br />
-            <span style={{ fontSize: isMobile ? '1.4rem' : '2.5rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.05em' }}>{target}</span><br />
-            <span style={{ fontSize: isMobile ? '0.6rem' : '0.9rem', color: '#00ffff', opacity: 0.8 }}>{currentPlanet?.description}</span>
-            <div style={{ height: '1px', background: 'rgba(0, 255, 255, 0.2)', margin: isMobile ? '10px 0' : '15px 0' }} />
-            <div style={{ color: '#4ade80', fontFamily: 'monospace', fontSize: isMobile ? '0.5rem' : '0.8rem', lineHeight: '1.4', marginBottom: '15px' }}>
-              STATS: {currentPlanet?.details}<br />
-              GRAVITY: {currentPlanet?.gravity}
-            </div>
-            {target !== 'ARCHIVE' && (
+        {/* Desktop Sidebar Navigation */}
+        {!isMobile && (
+          <div style={sidebarStyle}>
+            <p style={{
+              color: '#00ffff',
+              fontSize: '0.6rem',
+              marginBottom: '5px',
+              opacity: 0.5,
+              fontFamily: 'monospace'
+            }}>NAVIGATION_TARGETS</p>
+            {PLANET_DATA.map(planet => (
               <button
-                onClick={() => { setPrevTarget(target); setTarget('ARCHIVE'); }}
+                key={planet.name}
+                onClick={() => setTarget(planet.name)}
                 style={{
                   ...navButtonStyle,
-                  width: 'auto',
-                  background: 'rgba(0, 255, 255, 0.1)',
-                  border: '1px solid #00ffff',
-                  padding: '8px 20px',
-                  pointerEvents: 'auto'
+                  background: target === planet.name ? 'rgba(0, 255, 255, 0.2)' : navButtonStyle.background,
+                  borderColor: target === planet.name ? 'rgba(0, 255, 255, 1)' : navButtonStyle.borderColor,
+                  boxShadow: target === planet.name ? '0 0 15px rgba(0, 255, 255, 0.3)' : 'none',
                 }}
               >
-                [ ACCESS ARCHIVE ]
+                {planet.name}
               </button>
+            ))}
+          </div>
+        )}
+
+        {/* Bottom UI Region */}
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          justifyContent: 'space-between',
+          alignItems: isMobile ? 'flex-start' : 'flex-end',
+          pointerEvents: 'none',
+          gap: isMobile ? '10px' : '0'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            width: isMobile ? '100%' : 'auto',
+            gap: isMobile ? '10px' : '0'
+          }}>
+            <div style={{
+              background: 'rgba(0, 255, 255, 0.05)',
+              border: '1px solid rgba(0, 255, 255, 0.2)',
+              padding: isMobile ? '12px' : '25px',
+              backdropFilter: 'blur(10px)',
+              width: isMobile ? '100%' : '380px',
+              boxSizing: 'border-box',
+            }}>
+              <span style={{ fontSize: '0.6rem', color: '#00ffff', opacity: 0.6, fontFamily: 'monospace' }}>DATA_STREAM // {target}</span><br />
+              <span style={{ fontSize: isMobile ? '1.4rem' : '2.5rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.05em' }}>{target}</span><br />
+              <span style={{ fontSize: isMobile ? '0.6rem' : '0.9rem', color: '#00ffff', opacity: 0.8 }}>{currentPlanet?.description}</span>
+              <div style={{ height: '1px', background: 'rgba(0, 255, 255, 0.2)', margin: isMobile ? '10px 0' : '15px 0' }} />
+              <div style={{ color: '#4ade80', fontFamily: 'monospace', fontSize: isMobile ? '0.5rem' : '0.8rem', lineHeight: '1.4', marginBottom: '15px' }}>
+                STATS: {currentPlanet?.details}<br />
+                GRAVITY: {currentPlanet?.gravity}
+              </div>
+              {target !== 'ARCHIVE' && (
+                <button
+                  onClick={() => { setPrevTarget(target); setTarget('ARCHIVE'); }}
+                  style={{
+                    ...navButtonStyle,
+                    width: 'auto',
+                    background: 'rgba(0, 255, 255, 0.1)',
+                    border: '1px solid #00ffff',
+                    padding: '8px 20px',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  [ ACCESS ARCHIVE ]
+                </button>
+              )}
+            </div>
+
+            {/* Mobile Horizontal Navigation Bar */}
+            {isMobile && (
+              <div style={sidebarStyle}>
+                <style>{`div::-webkit-scrollbar { display: none; }`}</style>
+                {PLANET_DATA.map(planet => (
+                  <button
+                    key={planet.name}
+                    onClick={() => setTarget(planet.name)}
+                    style={{
+                      ...navButtonStyle,
+                      background: target === planet.name ? 'rgba(0, 255, 255, 0.2)' : navButtonStyle.background,
+                      borderColor: target === planet.name ? 'rgba(0, 255, 255, 1)' : navButtonStyle.borderColor,
+                      boxShadow: target === planet.name ? '0 0 15px rgba(0, 255, 255, 0.3)' : 'none',
+                    }}
+                  >
+                    {planet.name}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
-          <div style={{ textAlign: 'right', color: '#4ade80', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+          <div style={{ textAlign: isMobile ? 'left' : 'right', color: '#4ade80', fontFamily: 'monospace', fontSize: '0.6rem', paddingBottom: isMobile ? '10px' : '0' }}>
             SYSTEM: ONLINE<br />
             VERSION: v2.0-STABLE
           </div>
