@@ -490,7 +490,7 @@ function App() {
   };
 
   const navButtonStyle = {
-    background: 'rgba(0, 255, 255, 0.05)',
+    background: 'rgba(0, 255, 255, 0.005)',
     border: '1px solid rgba(0, 255, 255, 0.2)',
     color: '#00ffff',
     padding: isMobile ? '4px 8px' : '6px 12px',
@@ -596,7 +596,7 @@ function App() {
             gap: isMobile ? '10px' : '0'
           }}>
             <div style={{
-              background: 'rgba(0, 255, 255, 0.05)',
+              background: 'rgba(0, 255, 255, 0.005)',
               border: '1px solid rgba(0, 255, 255, 0.2)',
               padding: isMobile ? '12px' : '25px',
               backdropFilter: 'blur(10px)',
