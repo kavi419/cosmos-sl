@@ -473,9 +473,10 @@ function App() {
 
   const sidebarStyle = {
     position: 'absolute',
+    left: isMobile ? '0' : 'auto',
     right: isMobile ? '0' : '20px',
     top: isMobile ? 'auto' : '50%',
-    bottom: isMobile ? '120px' : 'auto',
+    bottom: isMobile ? '10px' : 'auto',
     width: isMobile ? '100vw' : 'auto',
     transform: isMobile ? 'none' : 'translateY(-50%)',
     display: 'flex',
@@ -483,25 +484,27 @@ function App() {
     overflowX: isMobile ? 'auto' : 'visible',
     whiteSpace: isMobile ? 'nowrap' : 'normal',
     padding: isMobile ? '10px 20px' : '0',
-    gap: '10px',
+    gap: isMobile ? '8px' : '10px',
     zIndex: 20,
     pointerEvents: 'auto',
     scrollbarWidth: 'none',
+    msOverflowStyle: 'none',
   };
 
   const navButtonStyle = {
     background: 'rgba(0, 255, 255, 0.05)',
     border: '1px solid rgba(0, 255, 255, 0.2)',
     color: '#00ffff',
-    padding: '6px 12px',
+    padding: isMobile ? '4px 8px' : '6px 12px',
     cursor: 'pointer',
     fontFamily: 'monospace',
-    fontSize: '0.7rem',
+    fontSize: isMobile ? '0.6rem' : '0.7rem',
     textAlign: 'left',
     letterSpacing: '0.1em',
     textTransform: 'uppercase',
     transition: 'all 0.3s ease',
-    width: '120px',
+    width: isMobile ? 'auto' : '120px',
+    minWidth: isMobile ? '80px' : '120px',
     backdropFilter: 'blur(5px)',
   };
 
@@ -554,7 +557,20 @@ function App() {
 
         {/* Sidebar Navigation */}
         <div style={sidebarStyle}>
-          <p style={{ color: '#00ffff', fontSize: '0.6rem', marginBottom: '5px', opacity: 0.5, fontFamily: 'monospace' }}>NAVIGATION_TARGETS</p>
+          {isMobile && (
+            <style>{`
+              div::-webkit-scrollbar { display: none; }
+            `}</style>
+          )}
+          <p style={{
+            color: '#00ffff',
+            fontSize: '0.5rem',
+            marginBottom: isMobile ? '0' : '5px',
+            marginRight: isMobile ? '10px' : '0',
+            opacity: 0.5,
+            fontFamily: 'monospace',
+            display: isMobile ? 'none' : 'block'
+          }}>NAVIGATION_TARGETS</p>
           {PLANET_DATA.map(planet => (
             <button
               key={planet.name}
@@ -579,7 +595,8 @@ function App() {
             padding: isMobile ? '12px' : '25px',
             backdropFilter: 'blur(10px)',
             width: isMobile ? '100%' : '380px',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            marginBottom: isMobile ? '60px' : '0'
           }}>
             <span style={{ fontSize: '0.6rem', color: '#00ffff', opacity: 0.6, fontFamily: 'monospace' }}>DATA_STREAM // {target}</span><br />
             <span style={{ fontSize: isMobile ? '1.4rem' : '2.5rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.05em' }}>{target}</span><br />
