@@ -37,11 +37,13 @@ const PLANET_DATA = [
   {
     name: 'JUPITER', texture: '/textures/jupiter.jpg', size: 5, position: [55, 0, 10], description: 'The Gas Giant',
     details: 'Moons: 95 | Diameter: 139,820 km', gravity: '24.79 m/s²',
+    moon: { name: 'Europa', color: '#f5f5f5', size: 0.5, distance: 6, speed: 1.5 },
     wiki: "Jupiter is the fifth planet from the Sun and the largest in the Solar System. It is a gas giant with a mass more than two and a half times that of all the other planets in the Solar System combined, but slightly less than one-thousandth the mass of the Sun. Jupiter is primarily composed of hydrogen, followed by helium, which constitutes a quarter of its mass."
   },
   {
     name: 'SATURN', texture: '/textures/saturn.jpg', size: 4.5, position: [75, 0, -10], description: 'The Ringed Planet',
     details: 'Rings: 7 Groups | Moons: 146', gravity: '10.44 m/s²',
+    moon: { name: 'Titan', color: '#e6b800', size: 0.6, distance: 18, speed: 1.0 },
     wiki: "Saturn is the sixth planet from the Sun and the second-largest in the Solar System, after Jupiter. It is a gas giant with an average radius of about nine and a half times that of Earth. Saturn's most famous feature is its prominent ring system, which is composed mostly of ice particles, with a smaller amount of rocky debris and dust."
   },
   {
@@ -55,6 +57,7 @@ const PLANET_DATA = [
     wiki: "Neptune is the eighth planet from the Sun and the farthest known solar planet. In the Solar System, it is the fourth-largest planet by diameter, the third-most-massive planet, and the densest giant planet. Neptune is 17 times the mass of Earth, slightly more massive than its near-twin Uranus. The planet's striking blue color is due to methane in its atmosphere."
   },
 ];
+
 
 function LoadingScreen() {
   const { active } = useProgress(); // Check if real loading is active
@@ -175,6 +178,121 @@ function Sun() {
   );
 }
 
+function ShootingStar() {
+  const ref = useRef();
+  const [data] = useState(() => ({
+    pos: [
+      (Math.random() - 0.5) * 400,
+      (Math.random() - 0.5) * 400,
+      (Math.random() - 0.5) * 400
+    ],
+    speed: 2 + Math.random() * 5,
+    delay: Math.random() * 5
+  }));
+
+  useFrame((state, delta) => {
+    if (!ref.current) return;
+    ref.current.position.z += data.speed;
+    ref.current.position.x -= data.speed * 0.5;
+
+    // Reset when far away
+    if (ref.current.position.z > 200 || ref.current.position.x < -200) {
+      ref.current.position.set(
+        (Math.random() - 0.5) * 600 + 200,
+        (Math.random() - 0.5) * 400,
+        -400
+      );
+    }
+  });
+
+  return (
+    <mesh ref={ref} position={data.pos} rotation={[0, Math.PI / 4, 0]}>
+      <boxGeometry args={[0.05, 0.05, 6]} />
+      <meshStandardMaterial
+        color="#00ffff"
+        emissive="#00ffff"
+        emissiveIntensity={10}
+        transparent
+        opacity={0.8}
+      />
+    </mesh>
+  );
+}
+
+function ShootingStars({ count = 8 }) {
+  return (
+    <group>
+      {Array.from({ length: count }).map((_, i) => (
+        <ShootingStar key={i} />
+      ))}
+    </group>
+  );
+}
+
+
+function FieryMeteor() {
+  const [active, setActive] = useState(false);
+  const meteorRef = useRef();
+
+  useEffect(() => {
+    // Initial random delay to not always start at exactly 90s from refresh if multiple instances exist
+    // But user asked for "every 90 seconds"
+    const trigger = () => {
+      setActive(true);
+    };
+
+    const interval = setInterval(trigger, 90000);
+    // Trigger once after first 90s
+    return () => clearInterval(interval);
+  }, []);
+
+  useFrame((state, delta) => {
+    if (!meteorRef.current) return;
+
+    if (active) {
+      // Traversal: Top-Left to Bottom-Right (Reduced Speed)
+      meteorRef.current.position.x += 1.8;
+      meteorRef.current.position.y -= 1.0;
+
+      // Reset when off-screen
+      if (meteorRef.current.position.x > 600) {
+        setActive(false);
+      }
+    } else {
+      // Park far away (Starting position for Top-Left)
+      meteorRef.current.position.set(-600, 350, -400);
+    }
+  });
+
+  return (
+    <group ref={meteorRef} visible={active}>
+      {/* Glow / Bloom head (Increased Size) */}
+      <mesh>
+        <sphereGeometry args={[2.0, 32, 32]} />
+        <meshStandardMaterial color="#ff4500" emissive="#ff8c00" emissiveIntensity={10} />
+      </mesh>
+
+      {/* Fiery Tail - Trails behind top-left (Increased Size and Length) */}
+      <mesh rotation={[0, 0, -Math.PI / 6]} position={[-12, 7, 0]}>
+        <cylinderGeometry args={[0.5, 2.5, 30, 32]} />
+        <meshStandardMaterial
+          color="#ff4500"
+          emissive="#ff0000"
+          emissiveIntensity={6}
+          transparent
+          opacity={0.6}
+        />
+      </mesh>
+
+      {/* Outer Glow for extra presence (Scaled up) */}
+      <mesh scale={[6, 6, 6]}>
+        <sphereGeometry args={[1, 32, 32]} />
+        <meshStandardMaterial color="#ff8c00" transparent opacity={0.2} blending={THREE.AdditiveBlending} />
+      </mesh>
+    </group>
+  );
+}
+
 function AsteroidBelt({ speed = 1 }) {
   const count = 2000;
   const meshRef = useRef();
@@ -220,7 +338,27 @@ function AsteroidBelt({ speed = 1 }) {
   );
 }
 
-function Planet({ name, texture, size, position, speed = 1 }) {
+function Moon({ moon, speed = 1 }) {
+  const moonRef = useRef();
+  useFrame(({ clock }) => {
+    if (moonRef.current) {
+      const t = clock.getElapsedTime() * moon.speed * speed * 0.5;
+      moonRef.current.position.x = Math.cos(t) * moon.distance;
+      moonRef.current.position.z = Math.sin(t) * moon.distance;
+      moonRef.current.rotation.y += 0.01 * speed;
+    }
+  });
+
+  return (
+    <mesh ref={moonRef}>
+      <sphereGeometry args={[moon.size, 16, 16]} />
+      <meshStandardMaterial color={moon.color} />
+    </mesh>
+  );
+}
+
+
+function Planet({ name, texture, size, position, speed = 1, moon }) {
   const map = useLoader(TextureLoader, texture);
   const ringStrip = useLoader(TextureLoader, name === 'SATURN' ? '/textures/saturn_ring_strip.jpg' : '/textures/sun.jpg');
   const ref = useRef();
@@ -286,6 +424,11 @@ function Planet({ name, texture, size, position, speed = 1 }) {
             opacity={0.9}
           />
         </mesh>
+      )}
+
+      {/* Orbiting Moon */}
+      {moon && (
+        <Moon moon={moon} speed={speed} />
       )}
     </group>
   );
@@ -424,6 +567,7 @@ function CameraHandler({ target }) {
       return;
     }
 
+
     const data = PLANET_DATA.find(p => p.name === target);
     if (!data) return;
 
@@ -487,11 +631,16 @@ function App() {
     pointerEvents: 'auto',
     scrollbarWidth: 'none',
     msOverflowStyle: 'none',
+    background: 'rgba(0, 0, 0, 0.1)',
+    backdropFilter: 'blur(4px)',
+    border: '1px solid rgba(255, 255, 255, 0.05)',
+    padding: isMobile ? '10px' : '20px',
+    borderRadius: '8px',
   };
 
   const navButtonStyle = {
-    background: 'rgba(0, 255, 255, 0.005)',
-    border: '1px solid rgba(0, 255, 255, 0.2)',
+    background: 'rgba(0, 255, 255, 0.05)',
+    border: '1px solid rgba(0, 255, 255, 0.1)',
     color: '#00ffff',
     padding: isMobile ? '4px 8px' : '6px 12px',
     cursor: 'pointer',
@@ -503,7 +652,7 @@ function App() {
     transition: 'all 0.3s ease',
     width: isMobile ? 'auto' : '120px',
     minWidth: isMobile ? '80px' : '120px',
-    backdropFilter: 'blur(5px)',
+    backdropFilter: 'blur(4px)',
   };
 
   return (
@@ -559,24 +708,40 @@ function App() {
             <p style={{
               color: '#00ffff',
               fontSize: '0.6rem',
-              marginBottom: '5px',
+              marginBottom: '10px',
               opacity: 0.5,
               fontFamily: 'monospace'
             }}>NAVIGATION_TARGETS</p>
-            {PLANET_DATA.map(planet => (
-              <button
-                key={planet.name}
-                onClick={() => setTarget(planet.name)}
-                style={{
-                  ...navButtonStyle,
-                  background: target === planet.name ? 'rgba(0, 255, 255, 0.2)' : navButtonStyle.background,
-                  borderColor: target === planet.name ? 'rgba(0, 255, 255, 1)' : navButtonStyle.borderColor,
-                  boxShadow: target === planet.name ? '0 0 15px rgba(0, 255, 255, 0.3)' : 'none',
-                }}
-              >
-                {planet.name}
-              </button>
-            ))}
+            {PLANET_DATA.map(planet => {
+              const isActive = target === planet.name;
+              return (
+                <button
+                  key={planet.name}
+                  onClick={() => setTarget(planet.name)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    borderLeft: isActive ? '2px solid #22d3ee' : '2px solid transparent',
+                    paddingLeft: '10px',
+                    color: isActive ? '#22d3ee' : '#9ca3af',
+                    cursor: 'pointer',
+                    fontFamily: 'monospace',
+                    fontSize: isMobile ? '0.6rem' : '0.7rem',
+                    textAlign: 'left',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    transition: 'all 0.3s ease',
+                    width: isMobile ? 'auto' : '120px',
+                    minWidth: isMobile ? '80px' : '120px',
+                    outline: 'none'
+                  }}
+                  onMouseEnter={(e) => { if (!isActive) e.target.style.color = 'white'; }}
+                  onMouseLeave={(e) => { if (!isActive) e.target.style.color = '#9ca3af'; }}
+                >
+                  {planet.name}
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -596,12 +761,13 @@ function App() {
             gap: isMobile ? '10px' : '0'
           }}>
             <div style={{
-              background: 'rgba(0, 255, 255, 0.005)',
-              border: '1px solid rgba(0, 255, 255, 0.2)',
+              background: 'rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               padding: isMobile ? '12px' : '25px',
-              backdropFilter: 'blur(10px)',
+              backdropFilter: 'blur(4px)',
               width: isMobile ? '100%' : '380px',
               boxSizing: 'border-box',
+              borderRadius: '8px',
             }}>
               <span style={{ fontSize: '0.6rem', color: '#00ffff', opacity: 0.6, fontFamily: 'monospace' }}>DATA_STREAM // {target}</span><br />
               <span style={{ fontSize: isMobile ? '1.4rem' : '2.5rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.05em' }}>{target}</span><br />
@@ -700,6 +866,8 @@ function App() {
           })}
 
           <AsteroidBelt speed={timeSpeed} />
+          <ShootingStars count={10} />
+          <FieryMeteor />
 
           <OrbitControls makeDefault enableZoom={true} enablePan={false} enableRotate={true} />
 
